@@ -1,0 +1,11 @@
+README.md
+CMakeLists.txt
+*.cmake
+*.json
+*.md
+*.txt
+*.yml
+*.yaml
+assets/
+build/
+.git/

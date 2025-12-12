@@ -1,0 +1,40 @@
+{
+  "name": "flink-home",
+  "version-string": "0.1.0",
+  "dependencies": [
+    {
+      "name": "glad"
+    },
+    {
+      "name": "spdlog"
+    },
+    {
+      "name": "stb"
+    },
+    {
+      "name": "imgui",
+      "platform": "windows",
+      "default-features": false,
+      "features": [
+        "win32-binding",
+        "docking-experimental",
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
+    {
+      "name": "imgui",
+      "platform": "linux | osx",
+      "default-features": false,
+      "features": [
+        "docking-experimental",
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
+    {
+      "name": "opencv4",
+      "default-features": false
+    }
+  ]
+}
