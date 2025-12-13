@@ -83,6 +83,22 @@ void updateEnergyMapAroundSeam(std::vector<int> &energy, const std::vector<int> 
                                int height, const unsigned char *pixels, int channels);
 
 /**
+ * @brief Removes the same vertical seam from an energy map (in-place).
+ *
+ * After removing a seam from the pixel buffer (width shrinks by 1), the energy map must also
+ * shrink by 1 column per row. If we don't, subsequent seam searches will interpret the energy
+ * buffer with the wrong row stride, causing seams to drift/bias (often to one side).
+ *
+ * @param energy    Energy map in row-major order (size must be old_width * height)
+ * @param old_width Width before seam removal
+ * @param height    Image height
+ * @param seam      Seam x-coordinates in the OLD width (one per row)
+ * @return true on success, false on invalid input
+ */
+bool removeSeamFromEnergy(std::vector<int> &energy, int old_width, int height,
+                          const std::vector<int> &seam);
+
+/**
  * @brief Finds the lowest energy vertical seam in an image using a greedy algorithm.
  *
  * This function implements a greedy approach to seam carving by finding a connected

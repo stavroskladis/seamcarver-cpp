@@ -19,10 +19,10 @@
 ## Features
 
 - **Content-Aware Resizing** — Removes low-energy seams to preserve important image features
-- **Real-Time Performance** — Hybrid optimization achieves ~31ms resize (12x faster than naive approach)
+- **Performance Optimizations** — Uses OpenCV for the initial energy map and incremental updates after each seam
 - **Interactive UI** — Slider-based control with immediate visual feedback via Dear ImGui
 - **Side-by-Side Comparison** — View original, seam-carved, and bilinear-resized images simultaneously
-- **Dual Algorithm Support** — Greedy (fast) and Dynamic Programming (optimal) seam selection
+- **Dual Algorithm Support** — Greedy (fast, locally optimal) and Dynamic Programming (globally optimal) seam selection
 
 ## Quick Demo
 
@@ -41,7 +41,9 @@ Input Image → Energy Map (Sobel) → Find Seam → Remove Seam → Repeat
 ```
 
 1. **Energy Map**: Compute gradient magnitude using Sobel operators — high values indicate edges/features
-2. **Seam Selection**: Find connected path from top to bottom with minimal cumulative energy
+2. **Seam Selection**:
+   - **Greedy**: chooses the lowest-energy neighbor each row (fast, locally optimal)
+   - **Dynamic Programming**: finds the **globally** minimal cumulative-energy seam (slower, optimal)
 3. **Seam Removal**: Shift pixels to close the gap, reducing width by 1
 4. **Iterate**: Repeat until target width is reached
 
@@ -52,9 +54,11 @@ The naive approach recalculates the entire energy map after each seam removal. O
 | Approach | Time (135 seams) | Strategy |
 |----------|------------------|----------|
 | **Naive** | 2.4 seconds | Full energy map recalculation per seam |
-| **Optimized** | 31 ms | Initial OpenCV + incremental updates |
+| **Optimized** | ~31 ms | Initial OpenCV + incremental updates |
 
-**Key insight**: After removing a seam, only ~3 pixels per row need energy recalculation (the seam's neighbors).
+**Key insight**:
+- After removing a seam, only a small neighborhood around that seam needs energy recomputation (roughly a few pixels per row).
+- **Correctness requirement**: after removing a seam from the image, we also remove/compact the same seam column from the energy map so the row stride stays aligned. Otherwise, subsequent seam searches read a “scrambled” energy grid and seams can drift/bias to one side.
 
 ### Algorithm Comparison
 
@@ -184,7 +188,7 @@ Seam carving faces challenges:
 - **Vertical Seams**: Support height reduction
 
 ### Important Note
-The times are indicative and based on my hardware. Also, the timing has been moved to debug builds only in order to keep the release builds I/O free (concerning the printing to console) and as fast as possible. 
+The times are indicative and based on my hardware and build settings. Timing output is printed in debug builds only to keep release builds I/O-free and as fast as possible.
 
 ## License
 

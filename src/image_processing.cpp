@@ -101,18 +101,50 @@ void updateEnergyMapAroundSeam(std::vector<int> &energy, const std::vector<int> 
         // std::max(0, seam_x - 1) clamps at the left border (just reuse the closest border pixel)
         // std::min(width - 1, seam_x + 1) clamps at the right border.
         for (int x = std::max(0, seam_x - 1); x <= std::min(width - 1, seam_x + 1); x++) {
-
-            if (x == seam_x)
-                continue; // Skip the removed seam pixel (update pixels [seam_x - 1, seam_x + 1])
-                          // after removal, position seam_x now contains what used to be at
-                          // position seam_x + 1 (which is still valid)
-                          // Update pixels that got new neighbors (seam_x - 1 and seam_x + 1)
-
-            // Manual Sobel calculation for just this pixel
+            // After seam removal, index seam_x now contains a real pixel (it used to be seam_x+1),
+            // so we must recompute it too.
             energy[y * width + x] =
                 calculateSinglePixelEnergy(pixels, x, y, width, height, channels);
         }
     }
+}
+
+bool removeSeamFromEnergy(std::vector<int> &energy, int old_width, int height,
+                          const std::vector<int> &seam) {
+    if (old_width <= 1 || height <= 0 || seam.size() != static_cast<size_t>(height)) {
+        return false;
+    }
+    if (energy.size() != static_cast<size_t>(old_width) * static_cast<size_t>(height)) {
+        return false;
+    }
+
+    const int new_width = old_width - 1;
+
+    // Compact each row from old_width -> new_width, skipping the seam element.
+    for (int y = 0; y < height; y++) {
+        const int seam_x = seam[y];
+        if (seam_x < 0 || seam_x >= old_width) {
+            return false;
+        }
+
+        int *src_row = energy.data() + static_cast<size_t>(y) * old_width;
+        int *dst_row = energy.data() + static_cast<size_t>(y) * new_width;
+
+        // Copy left side (0..seam_x-1)
+        if (seam_x > 0) {
+            memmove(dst_row, src_row, static_cast<size_t>(seam_x) * sizeof(int));
+        }
+
+        // Copy right side (seam_x+1..old_width-1) into dst starting at seam_x
+        const int right_count = old_width - seam_x - 1;
+        if (right_count > 0) {
+            memmove(dst_row + seam_x, src_row + seam_x + 1,
+                    static_cast<size_t>(right_count) * sizeof(int));
+        }
+    }
+
+    energy.resize(static_cast<size_t>(new_width) * static_cast<size_t>(height));
+    return true;
 }
 
 // Custom energy map computation (for demonstration purposes) - to compare with OpenCV

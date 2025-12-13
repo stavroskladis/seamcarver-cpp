@@ -397,8 +397,16 @@ void ShowSeamCarvedImage(const unsigned char *pixels, int width, int height, int
             // current_width, current_height);
 
             // Remove the seam from the working buffer
+            const int old_width = current_width;
             if (!removeSeam(work_buffer.get(), current_width, current_height, seam)) {
                 ImGui::TextColored(ImVec4(1, 0, 0, 1), "Seam removal failed!");
+                seams_removal_ok = false;
+                break;
+            }
+
+            // We need to keep energy_map in sync with the shrunken image width.
+            if (!removeSeamFromEnergy(energy_map, old_width, current_height, seam)) {
+                ImGui::TextColored(ImVec4(1, 0, 0, 1), "Energy seam removal failed!");
                 seams_removal_ok = false;
                 break;
             }
